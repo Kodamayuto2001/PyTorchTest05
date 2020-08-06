@@ -109,17 +109,17 @@ class MyDataLoader:
         --numWorkers = the number of tagNames
     """
     def __init__(self,trainRootDir,testRootDir,imgSize,batchSize,numWorkers):
-        self.my_collate_fn(batch=batchSize)
-        self.dataSet(trainRootDir=trainRootDir,testRootDir=testRootDir,imgSize=imgSize)
-        self.dataLoader(batchSize=batchSize,numWorkers=numWorkers)
+        #self.__my_collate_fn(batch=batchSize)
+        self.__dataSet(trainRootDir=trainRootDir,testRootDir=testRootDir,imgSize=imgSize)
+        self.__dataLoader(batchSize=batchSize,numWorkers=numWorkers)
         pass
-    def my_collate_fn(self,batch):
+    def __my_collate_fn(self,batch):
         pass 
-    def dataSet(self,trainRootDir,testRootDir,imgSize):
+    def __dataSet(self,trainRootDir,testRootDir,imgSize):
         self.trainData = torchvision.datasets.ImageFolder(root=trainRootDir,transform=transforms.Compose([transforms.Grayscale(),transforms.Resize((imgSize,imgSize)),transforms.ToTensor(),]))
         self.testData = torchvision.datasets.ImageFolder(root=testRootDir,transform=transforms.Compose([transforms.Grayscale(),transforms.Resize((imgSize,imgSize)),transforms.ToTensor(),]))
         pass
-    def dataLoader(self,batchSize,numWorkers):
+    def __dataLoader(self,batchSize,numWorkers):
         self.trainDataLoaders = torch.utils.data.DataLoader(self.trainData,batch_size=batchSize,shuffle=True,num_workers=numWorkers)
         self.testDataLoaders = torch.utils.data.DataLoader(self.testData,batch_size=batchSize,shuffle=True,num_workers=numWorkers)
         pass
@@ -132,12 +132,20 @@ class MyDataLoader:
        npimg = img.numpy()
        plt.imshow(np.transpose(npimg,(1,2,0)))
        plt.show()
+       pass
+    def getDataLoaders(self):
+        r"""
+        RETURN
+            --trainDataLoaders,
+            --testDataLoaders
+        """
+        return self.trainDataLoaders,self.testDataLoaders
     pass
 class Net(nn.Module):
-    def __init__(self,imgSize):
+    def __init__(self):
         super(Net,self).__init__()
-        self.fc1 = nn.Linear(imgSize*imgSize,400)
-        self.fc2 = nn.Linear(400,2)
+        self.fc1 = nn.Linear(64,64)
+        self.fc2 = nn.Linear(64,4)
         pass
     
     def forward(self,x):
@@ -155,3 +163,28 @@ if __name__ == "__main__":
     Person3 = MyDataset(dirImgPath="Resources/",tagName="Ouki",dataNum=dNum)
     mDataLoader = MyDataLoader(trainRootDir="Resources/train/",testRootDir="Resources/test/",imgSize=64,batchSize=1,numWorkers=3)
     mDataLoader.imshow()
+
+    trainLoader,testLoader = mDataLoader.getDataLoaders()
+
+    net = Net()
+
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(net.parameters(),lr=0.01)
+
+    for epoch in tqdm(range(2)):
+        for i,data in tqdm(enumerate(trainLoader,0)):
+            #訓練データから入力画像の行列とラベルを取り出す。
+            inputs,labels = data
+            print("{}--{}--{}".format(type(inputs),labels,inputs.size()))
+            
+            #optimizer.zero_grad()
+            #outputs = net(inputs)
+            #loss = criterion(outputs,labels)
+            #loss.backward()
+            #optimizer.step()
+            
+    #sys.stdout.flush()
+    sys.stdout.write("\r {}".format("Finished Training"))
+
+    
+
